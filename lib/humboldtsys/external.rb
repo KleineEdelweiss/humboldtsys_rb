@@ -25,7 +25,7 @@ module Extern
     def defaults
       {
         :lspci = 'lspci -Dnnvvvkmm',
-        :dmi
+        :dmidecode = '',
       }
     end # End program checker
   end # End Progs class
