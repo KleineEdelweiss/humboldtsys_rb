@@ -1,6 +1,10 @@
 # lib/humboldtsys/host.rb
 
+# Regular requires
 require_relative "./constants"
+
+# Require Extensions
+require_relative "../share/host_data/host_data"
 
 # This module will provide generic access to host system
 # information and settings.
@@ -51,29 +55,34 @@ module Host
     # or replacing the System object.
     attr_reader :host
     
-    # Initialize all object variables,
-    # except the hostname. Return stat.
+    # Initialize the distro data and then
+    # update the host data with stat.
     def initialize
       @host = {
-        distro: File.read(Constants::HOST[:distro]).strip,
-        os: `uname -o`.strip,
-        kernel_name: File.read(Constants::HOST[:name]).strip,
-        kernel_release: File.read(Constants::HOST[:release]).strip,
-        arch: `uname -m`.strip,
-        hostname: hostname,
-        domain: domain,
+        distro: release_info(File.read(Constants::RELEASE).split("\n")),
+        kernel: HostData.uname,
       }
       stat
     end # End constructor
     
+    # Split the data in the `/etc/os-release` file
+    # into a key-value pair.
+    def release_info(osr)
+      osr.collect do |line|
+        line.split("=", 2).then do |k,v|
+          {k.strip.downcase.to_sym => v.strip.gsub("\"", "")}
+        end
+      end.reduce Hash.new, :update
+    end # End split release
+    
     # Return the system information
     # as a hash
-    def stat() @host.update({hostname: hostname, domain: domain}) end
+    def stat() @host.update({hostname: hostname, domainname: domain}) end
     
     # Return just the hostname
-    def hostname() File.read(Constants::HOST[:hostname]).strip end
+    def hostname() HostData.hostname.strip end
       
     # Return just the domain name
-    def domain() File.read(Constants::HOST[:domain]).strip end
+    def domain() HostData.domainname.strip end
   end # End Host class
 end # End Host module

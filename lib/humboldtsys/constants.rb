@@ -10,11 +10,15 @@ module Constants
   # Host data
   UPTIME = "/proc/uptime"
   KERNEL = "/proc/sys/kernel"
+  RELEASE = "/etc/os-release"
+  
   HOST = {
-    name: "#{KERNEL}/ostype", 
-    release: "#{KERNEL}/osrelease",
+    # Kernel Data
+    k_name: "#{KERNEL}/ostype", 
+    k_release: "#{KERNEL}/osrelease",
+    
+    # Kernel-loaded network data
     hostname: "#{KERNEL}/hostname",
     domain: "#{KERNEL}/domainname",
-    distro: "#{KERNEL}/version",
   }
 end

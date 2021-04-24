@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 require_relative "lib/humboldtsys/version.rb"
 
+# Spec
 Gem::Specification.new do |spec|
   spec.name = "humboldtsys"
   spec.version = HumboldtSys::VERSION
@@ -16,6 +17,7 @@ Gem::Specification.new do |spec|
   DESC
   spec.authors = ["Edelweiss"]
   
+  # Website data
   spec.homepage = "https://github.com/KleineEdelweiss/humboldtsys_rb"
   spec.licenses = ["LGPL-3.0"]
   spec.metadata = {
@@ -26,8 +28,10 @@ Gem::Specification.new do |spec|
     "bug_tracker_uri"     => "https://github.com/KleineEdelweiss/humboldtsys_rb/issues"
   }
   
+  # List of files
   spec.files = Dir.glob("lib/**/*")
   
+  # Rdoc options
   spec.extra_rdoc_files = Dir["README.md", "CHANGELOG.md", "LICENSE.txt"]
   spec.rdoc_options += [
     "--title", "HumboldtSys RB -- Generic Linux system access interface in Ruby",
@@ -37,5 +41,9 @@ Gem::Specification.new do |spec|
     "--quiet"
   ]
   
+  # Minimum Ruby version
   spec.required_ruby_version = ">= 2.7.0"
-end
+  
+  # Compiled extensions
+  spec.extensions = ['ext/host_data/extconf.rb']
+end # End spec
