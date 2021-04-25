@@ -1,12 +1,16 @@
 # lib/humboldtsys/funcs.rb
 
+# Require Extensions
+require_relative "../share/other/other"
+
 # This module contains generic functions that
 # may be used for any purpose with a Linux system
 module Funcs
+  # Return the user's ID
+  def self.uid() Other.uid end
+  
   # Check if the user is `root`
-  def self.root?
-    `id -u`.strip.to_i == 0
-  end # End root
+  def self.root?() Other.root end
   
   # Check if the user is a member of at least
   # one of the group arguments.
