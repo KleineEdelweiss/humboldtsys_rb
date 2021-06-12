@@ -24,8 +24,8 @@ module Extern
     # it requires root access or not.
     def defaults
       {
-        :lspci = 'lspci -Dnnvvvkmm',
-        :dmidecode = '',
+        :lspci => 'lspci -Dnnvvvkmm',
+        :dmidecode => '',
       }
     end # End program checker
   end # End Progs class
