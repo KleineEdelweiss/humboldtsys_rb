@@ -4,7 +4,7 @@
 require_relative "./constants"
 
 # Require Extensions
-require_relative "../share/host_data/host_data"
+require_relative "../syscore/syscore"
 
 # This module will provide generic access to host system
 # information and settings.

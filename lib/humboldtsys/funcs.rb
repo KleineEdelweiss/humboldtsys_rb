@@ -1,7 +1,7 @@
 # lib/humboldtsys/funcs.rb
 
 # Require Extensions
-require_relative "../share/other/other"
+require_relative "../syscore/syscore"
 
 # This module contains generic functions that
 # may be used for any purpose with a Linux system

@@ -45,9 +45,5 @@ Gem::Specification.new do |spec|
   spec.required_ruby_version = ">= 2.7.0"
   
   # Compiled extensions
-  spec.extensions = [
-    'ext/host_data/extconf.rb',
-    'ext/syscore/extconf.rb',
-    'ext/other/extconf.rb',
-  ]
+  spec.extensions = ['ext/syscore/extconf.rb',]
 end # End spec

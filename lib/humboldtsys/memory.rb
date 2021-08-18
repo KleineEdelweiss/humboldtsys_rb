@@ -4,7 +4,7 @@
 require_relative "./constants"
 
 # Require Extensions
-require_relative "../share/syscore/syscore"
+require_relative "../syscore/syscore"
 
 ##
 # This module handles memory information and parsing.

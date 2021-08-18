@@ -1,8 +1,9 @@
 # ext/syscore/extconf.rb
 require 'mkmf'
 
-# Build PCI
-$LFLAGS = ['-lprocps', '-lcpuinfo']
+# Build SysCore
+$CPPFLAGS += '-Wno-deprecated-declarations'
+$LFLAGS = ['-lprocps', '-lcpuinfo', '-lstdc++']
 $FLAGS = ['clean']
 
 # Dependency checker
@@ -74,8 +75,8 @@ DEPFAIL
 else
   create_makefile("syscore/syscore")
 # SUCCESS MESSAGE FOR SysCore
-STDERR.puts <<PCISUCC
+STDERR.puts <<SYSSUCC
 #{EBORDER}
   ::STATUS (SysCore):: dependencies satisfied; Makefile created
-PCISUCC
+SYSSUCC
 end # End output report
