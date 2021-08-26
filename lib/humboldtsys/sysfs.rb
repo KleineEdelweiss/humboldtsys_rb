@@ -1,6 +1,6 @@
 # lib/humboldtsys/sysfs.rb
 
-require_relative "./constants"
+require_relative "constants"
 
 # This module will provide access to the sysfs
 # virtual filesystem, including (and primarily for

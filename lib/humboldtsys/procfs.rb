@@ -1,6 +1,6 @@
 # lib/humboldtsys/procfs.rb
 
-require_relative "./constants"
+require_relative "constants"
 
 # This module will handle parsing of data in the
 # /proc/ virtual filesystem.

@@ -1,6 +1,6 @@
 # lib/humboldtsys/external.rb
 
-require_relative "./funcs"
+require_relative "funcs"
 
 # This module will be used to check for the existence
 # of certain programs that may be statted for particular

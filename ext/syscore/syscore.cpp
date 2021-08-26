@@ -41,12 +41,26 @@ typedef struct {
   double steal;
   double guest;
   double guest_nice;
-} lcore_t; // End logical processor struct wrapper
+} lcore_t; // End logical processor struct
 
 // Read in a single logical processor and map it
 // Not exported, because takes non-Ruby values
-VALUE u_method_syscore_map_lcore() {
+// Will return a raw hash to be wrapped Ruby-side
+VALUE u_method_syscore_map_lcore(lcore_t lcr) {
+  VALUE lch = rb_hash_new();
   
+  rb_hash_aset(lch, ID2SYM(rb_intern("user")), DBL2NUM(lcr.user));
+  rb_hash_aset(lch, ID2SYM(rb_intern("nice")), DBL2NUM(lcr.nice));
+  rb_hash_aset(lch, ID2SYM(rb_intern("system")), DBL2NUM(lcr.system));
+  rb_hash_aset(lch, ID2SYM(rb_intern("idle")), DBL2NUM(lcr.idle));
+  rb_hash_aset(lch, ID2SYM(rb_intern("iowait")), DBL2NUM(lcr.iowait));
+  rb_hash_aset(lch, ID2SYM(rb_intern("irq")), DBL2NUM(lcr.irq));
+  rb_hash_aset(lch, ID2SYM(rb_intern("softirq")), DBL2NUM(lcr.softirq));
+  rb_hash_aset(lch, ID2SYM(rb_intern("steal")), DBL2NUM(lcr.steal));
+  rb_hash_aset(lch, ID2SYM(rb_intern("guest")), DBL2NUM(lcr.guest));
+  rb_hash_aset(lch, ID2SYM(rb_intern("guest_nice")), DBL2NUM(lcr.guest_nice));
+  
+  return lch;
 } // End CPU logical core wrapper
 
 // Processor usage stat method
@@ -72,6 +86,11 @@ VALUE method_syscore_proc_stat(VALUE self) {
   // Counter
   int count = 0;
   
+  // Create hash to hold the logical processors,
+  // mapped to the package, with sister elements of
+  // cluster and core data.
+  VALUE packages = rb_hash_new();
+  
   // Stream read loop
   fd.open(PROC_FILE);
   while (fd >> name >> lc.user >> lc.nice >> lc.system >> lc.idle
@@ -96,7 +115,12 @@ VALUE method_syscore_proc_stat(VALUE self) {
     // Set the index of the processor
     if (name.length() > 3) { pindex = std::stoi(name.substr(3)); }
     else { pindex = -1; } // -1 will be used for the average
+    lc.pindex = pindex;
     //std::cout << "Index for this processor will be: " << pindex << "\n";
+    
+    // Attach the logical processor to the hash
+    rb_hash_aset(packages, INT2NUM(pindex), 
+      u_method_syscore_map_lcore(lc));
     
     // See if there was a previous entry with this key
     // Change this to use the pindex, later...
@@ -120,7 +144,7 @@ VALUE method_syscore_proc_stat(VALUE self) {
   fd.close(); // Clean up file descriptor
   //std::cout << "Total lines with core data in proc file: " << count << "\n";
   //end_of_cores = count;
-  return Qtrue;
+  return packages;
 } // End processor usage stat method
 
 extern "C" {
@@ -250,7 +274,7 @@ extern "C" {
     return out;
   } // End RAM method
 
-    // SWAP method
+  // SWAP method
   VALUE method_syscore_swap(VALUE self) {
     meminfo(); // Initialize the memory info
     VALUE out = rb_hash_new(); // Initialize the storage struct
@@ -266,6 +290,27 @@ extern "C" {
   // --------- //
   // Processor monitoring methods
   // --------- //
+  // Count CPU parts count
+  VALUE method_syscore_cpu_count(VALUE self) {
+    // Check if library is init
+    method_syscore_cpuinfo_init(self);
+    
+    // Hash of the parts included
+    VALUE out = rb_hash_new();
+    
+    // Attach package, cluster, core, and logical unit count
+    rb_hash_aset(out, ID2SYM(rb_intern("packages")),
+      INT2NUM(cpuinfo_get_packages_count()));
+    rb_hash_aset(out, ID2SYM(rb_intern("clusters")),
+      INT2NUM(cpuinfo_get_clusters_count()));
+    rb_hash_aset(out, ID2SYM(rb_intern("cores")),
+      INT2NUM(cpuinfo_get_cores_count()));
+    rb_hash_aset(out, ID2SYM(rb_intern("lprocs")),
+      INT2NUM(cpuinfo_get_processors_count()));
+    
+    // Return the count list
+    return out;
+  } // End CPU parts count method
 
   // --------- //
   // End of monitoring and resource section
@@ -283,10 +328,11 @@ extern "C" {
     // Module methods
     // Extraneous / general accessors
     rb_define_module_function(SysCore, "uid", method_misc_uid, 0);
-    rb_define_module_function(SysCore, "root", method_misc_root, 0);
+    rb_define_module_function(SysCore, "root?", method_misc_root, 0);
     
     // Time methods
     rb_define_module_function(SysCore, "boot_time", method_syscore_boot_time, 0);
+    rb_define_module_function(SysCore, "btime", method_syscore_boot_time, 0);
     rb_define_module_function(SysCore, "uptime", method_syscore_uptime, 0);
     
     // Host access methods
@@ -295,8 +341,9 @@ extern "C" {
     rb_define_module_function(SysCore, "domainname", method_host_domainname, 0);
     
     // CpuInfo methods
-    rb_define_module_function(SysCore, "init", method_syscore_cpuinfo_init, 0);
-    rb_define_module_function(SysCore, "deinit", method_syscore_cpuinfo_deinit, 0);
+    //rb_define_module_function(SysCore, "init", method_syscore_cpuinfo_init, 0);
+    //rb_define_module_function(SysCore, "deinit", method_syscore_cpuinfo_deinit, 0);
+    rb_define_module_function(SysCore, "cpu_count", method_syscore_cpu_count, 0);
     
     // Other CPU methods
     // Stat the processor cores
@@ -305,5 +352,8 @@ extern "C" {
     // Memory methods
     rb_define_module_function(SysCore, "mem", method_syscore_ram, 0);
     rb_define_module_function(SysCore, "swap", method_syscore_swap, 0);
+    
+    // De-initialize libraries
+    atexit(cpuinfo_deinitialize);
   } // End init
 }
