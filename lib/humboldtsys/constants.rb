@@ -1,8 +1,8 @@
-# lib/humboldtsys/cosntants.rb
+# lib/humboldtsys/constants.rb
 
 ##
 # Global constants for HumboldtSys
-module HumboltSys
+module HumboldtSys
   ##
   # Numeric constants
   KILO = 10**3

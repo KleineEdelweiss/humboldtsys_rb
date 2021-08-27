@@ -26,6 +26,9 @@
 #define HOSTSTR char name[MAXSTR]
 #define PROC_FILE "/proc/stat"
 
+// Process table global -- NOT exposed/wrapped
+PROCTAB *PTABLE = 0;
+
 // Typedef for what a logical core is
 typedef struct {
   int pindex; // Processor index
@@ -313,6 +316,25 @@ extern "C" {
   } // End CPU parts count method
 
   // --------- //
+  // Processes and threads section
+  // --------- //
+  // Count the number of processes currently running
+  VALUE method_syscore_procps_count(VALUE self) {
+    PTABLE = openproc(0); // Fill the process table
+    int cnt = 0; // Counter
+    while (proc_t *cproc = readproc(PTABLE, NULL)) {
+      cnt++; // Increment the counter
+      freeproc(cproc); // Free the process item
+    } // Find the last pointer
+    closeproc(PTABLE); // Clear the process table
+    return INT2NUM(cnt); // Return the counter as a Ruby type
+  } // End process count
+  
+  // --------- //
+  // End of processes and threads section
+  // --------- //
+  
+  // --------- //
   // End of monitoring and resource section
   // --------- //
 
@@ -352,6 +374,9 @@ extern "C" {
     // Memory methods
     rb_define_module_function(SysCore, "mem", method_syscore_ram, 0);
     rb_define_module_function(SysCore, "swap", method_syscore_swap, 0);
+    
+    // Processes
+    rb_define_module_function(SysCore, "pcount", method_syscore_procps_count, 0);
     
     // De-initialize libraries
     atexit(cpuinfo_deinitialize);
