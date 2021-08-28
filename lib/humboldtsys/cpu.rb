@@ -3,6 +3,7 @@
 # Regular requires
 require_relative "constants"
 require_relative "templates/currently"
+require_relative "templates/usage"
 
 # Require Extensions
 require_relative "syscore"
