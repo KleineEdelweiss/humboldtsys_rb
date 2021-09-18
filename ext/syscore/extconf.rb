@@ -2,9 +2,9 @@
 require 'mkmf'
 
 # Build SysCore
+$FLAGS = ['clean']
 $CPPFLAGS += '-Wno-deprecated-declarations'
 $LFLAGS = ['-lprocps', '-lcpuinfo', '-lstdc++']
-$FLAGS = ['clean']
 
 # Dependency checker
 lchecks = []
