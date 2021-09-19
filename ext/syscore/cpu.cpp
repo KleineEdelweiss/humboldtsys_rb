@@ -124,7 +124,8 @@ namespace SysCorePlusPlus {
   } // End core path appendment method
   
   // Attach online status
-  void u_method_syscore_lcore_online(VALUE lch, str_map_t paths) {
+  void u_method_syscore_lcore_online(VALUE lch, 
+    const lcore_t *lcr, str_map_t paths) {
     auto itr_idx = paths.find(std::string("sysfs"));
     if (itr_idx != paths.end()) {
       rb_hash_aset(lch, ID2SYM(rb_intern("online")),
@@ -134,17 +135,29 @@ namespace SysCorePlusPlus {
   } // End online status
   
   // Attach package ID to the core
-  void u_method_syscore_lcore_package(VALUE lch, str_map_t paths) {
+  void u_method_syscore_lcore_package(VALUE lch, 
+    const lcore_t *lcr, str_map_t paths) {
     auto itr_idx = paths.find(std::string("sysfs"));
     if (itr_idx != paths.end()) {
-      rb_hash_aset(lch, ID2SYM(rb_intern("sock_num")),
-        INT2NUM(
-          atoi(u_method_read_core_attrib_file(
-            itr_idx->second + "/physical_package_id").c_str()))); }
+      // Get the package / socket ID
+      uint pkg_id = atoi(u_method_read_core_attrib_file(
+        itr_idx->second + "/physical_package_id").c_str());
+      
+      // Load in the package object
+      CPUI_INIT; // Shorthand initializer
+      const cpuinfo_package *pkg = cpuinfo_get_package(pkg_id); // Package object
+      
+      // Store the name of the package from above
+      rb_hash_aset(lch, ID2SYM(rb_intern("name")), rb_str_new2(pkg->name));
+      
+      // Store the package ID number
+      rb_hash_aset(lch, ID2SYM(rb_intern("sock_num")), INT2NUM(pkg_id));
+    }
   } // End package ID appendment
   
   // Attach core ID to the core
-  void u_method_syscore_lcore_core_num(VALUE lch, str_map_t paths) {
+  void u_method_syscore_lcore_core_num(VALUE lch, 
+    const lcore_t *lcr, str_map_t paths) {
     auto itr_idx = paths.find(std::string("topology"));
     if (itr_idx != paths.end()) {
       rb_hash_aset(lch, ID2SYM(rb_intern("core_num")),
@@ -154,7 +167,8 @@ namespace SysCorePlusPlus {
   } // End core ID appendment
   
   // Attach frequencies to the core
-  void u_method_syscore_lcore_core_freq(VALUE lch, str_map_t paths) {
+  void u_method_syscore_lcore_core_freq(VALUE lch, 
+    const lcore_t *lcr, str_map_t paths) {
     auto itr_idx = paths.find(std::string("frequency"));
     if (itr_idx != paths.end()) {
       rb_hash_aset(lch, ID2SYM(rb_intern("freq_driver")),
@@ -176,7 +190,8 @@ namespace SysCorePlusPlus {
   } // End frequencies appendment
   
   // Attach governor options to the core
-  void u_method_syscore_lcore_core_govs(VALUE lch, str_map_t paths) {
+  void u_method_syscore_lcore_core_govs(VALUE lch, 
+    const lcore_t *lcr, str_map_t paths) {
     auto itr_idx = paths.find(std::string("frequency"));
     if (itr_idx != paths.end()) {
       // Optimizations
@@ -210,12 +225,25 @@ namespace SysCorePlusPlus {
   } // End governors appendment
   
   // Attach informational data to the core
-  void u_method_syscore_lcore_info(VALUE lch, str_map_t paths) {
-    u_method_syscore_lcore_package(lch, paths); // Socket
-    u_method_syscore_lcore_core_num(lch, paths); // Physical core
-    u_method_syscore_lcore_online(lch, paths); // Whether online
-    u_method_syscore_lcore_core_freq(lch, paths); // Frequencies
-    u_method_syscore_lcore_core_govs(lch, paths); // Governors
+  void u_method_syscore_lcore_info(VALUE lch, const lcore_t *lcr, str_map_t paths) {
+    VALUE dev = rb_hash_new(); // Create device info
+    VALUE freq = rb_hash_new(); // Create frequency info
+    
+    // Attach data to device topology hash
+    u_method_syscore_lcore_package(dev, lcr, paths); // Socket
+    u_method_syscore_lcore_core_num(dev, lcr, paths); // Physical core
+    // Logical processor number
+    rb_hash_aset(dev, ID2SYM(rb_intern("proc_num")), INT2NUM(lcr->pindex));
+    u_method_syscore_lcore_online(dev, lcr, paths); // Whether online
+    
+    // Attach data to the frequency hash
+    u_method_syscore_lcore_core_freq(freq, lcr, paths); // Frequencies
+    u_method_syscore_lcore_core_govs(freq, lcr, paths); // Governors
+    
+    // Attach the device topology to the processor
+    rb_hash_aset(lch, ID2SYM(rb_intern("device")), dev);
+    // Attach the frequency data to the processor
+    rb_hash_aset(lch, ID2SYM(rb_intern("frequencies")), freq);
   } // End informational appendment
 
   // Read in a single logical processor and map it
@@ -242,8 +270,7 @@ namespace SysCorePlusPlus {
     rb_hash_aset(lch, ID2SYM(rb_intern("guest_nice")), DBL2NUM(lcr.guest_nice));
     
     // Add additional information
-    rb_hash_aset(lch, ID2SYM(rb_intern("proc_num")), INT2NUM(lcr.pindex));
-    u_method_syscore_lcore_info(lch, paths);
+    u_method_syscore_lcore_info(lch, &lcr, paths);
     
     // Return the mapped CPU hash
     return lch;
